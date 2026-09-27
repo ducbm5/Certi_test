@@ -242,6 +242,14 @@ export const fetchRunnersFromSource = async (
     let data: any = null;
     let fetchErrorMsg = '';
 
+    // If no URL or placeholder/invalid URL (e.g. "test", "test2")
+    if (!url || (!url.startsWith('/') && !/^https?:\/\//i.test(url))) {
+      return {
+        runners: INITIAL_RUNNERS,
+        fromCache: false,
+      };
+    }
+
     // Direct backend proxy endpoint /api/marathon-data
     if (url === '/api/marathon-data' || url.startsWith('/api/marathon-data')) {
       let isJson = false;

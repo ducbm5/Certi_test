@@ -23,6 +23,17 @@ export interface CreateRacePayload {
  * Ưu tiên các file JSON tĩnh trong thư mục public/races/ trước
  */
 export function getLocalRaces(): Race[] {
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('vm_all_races_cache_v2');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(ensureRaceRunners);
+        }
+      }
+    } catch {}
+  }
   return RACES.map(ensureRaceRunners);
 }
 
@@ -31,13 +42,23 @@ export function getLocalRaces(): Race[] {
  * Hoàn toàn chạy được trên Vercel / GitHub Pages tĩnh không cần server!
  */
 export async function fetchAllRaces(): Promise<Race[]> {
+  const saveCache = (races: Race[]) => {
+    if (typeof window !== 'undefined' && Array.isArray(races) && races.length > 0) {
+      try {
+        localStorage.setItem('vm_all_races_cache_v2', JSON.stringify(races));
+      } catch {}
+    }
+  };
+
   // 1. Thử tải file tĩnh public/races-data.json (hoạt động 100% trên Vercel không cần Node.js backend)
   try {
     const staticResp = await fetch('/races-data.json?t=' + Date.now());
     if (staticResp.ok) {
       const staticData: Race[] = await staticResp.json();
       if (Array.isArray(staticData) && staticData.length > 0) {
-        return staticData.map(ensureRaceRunners);
+        const res = staticData.map(ensureRaceRunners);
+        saveCache(res);
+        return res;
       }
     }
   } catch {}
@@ -48,7 +69,9 @@ export async function fetchAllRaces(): Promise<Race[]> {
     if (resp.ok) {
       const data: Race[] = await resp.json();
       if (Array.isArray(data) && data.length > 0) {
-        return data.map(ensureRaceRunners);
+        const res = data.map(ensureRaceRunners);
+        saveCache(res);
+        return res;
       }
     }
   } catch (err) {

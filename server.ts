@@ -749,9 +749,10 @@ async function startServer() {
   app.get('/api/proxy-sheet', async (req, res) => {
     const targetUrl = req.query.url as string;
     const forceRefresh = req.query.force === 'true' || req.query.bust === 'true';
-    if (!targetUrl) {
-      return res.status(400).json({ error: 'Missing url parameter' });
+    if (!targetUrl || !/^https?:\/\//i.test(targetUrl.trim())) {
+      return res.status(400).json({ error: 'URL không hợp lệ hoặc thiếu (phải bắt đầu bằng http:// hoặc https://)' });
     }
+    const cleanTargetUrl = targetUrl.trim();
 
     const cacheKey = targetUrl;
     const baseUrl = targetUrl.split('?')[0];
@@ -865,8 +866,8 @@ async function startServer() {
     const targetUrl = req.query.url as string;
     const bib = req.query.bib ? String(req.query.bib).toLowerCase().trim() : '';
 
-    if (!targetUrl) {
-      return res.status(400).json({ error: 'Missing url parameter (Google Apps Script URL cho ảnh)' });
+    if (!targetUrl || !/^https?:\/\//i.test(targetUrl.trim())) {
+      return res.status(400).json({ error: 'Missing or invalid url parameter (phải bắt đầu bằng http:// hoặc https://)' });
     }
 
     try {

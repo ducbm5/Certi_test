@@ -59,17 +59,42 @@ export const drawCertificate = async (options: DrawOptions): Promise<void> => {
   // Clear canvas
   ctx.clearRect(0, 0, width, height);
 
-  // 1. Draw Background: ALWAYS use /NA26.png (1469 x 3508)
-  let bgImgToDraw: HTMLImageElement | null = await getNA26Image();
+  // 1. Draw Background: Use customImageObj, or options.defaultBgUrl / config.customBgDataUrl, or fallback to /NA26.png
+  let bgImgToDraw: HTMLImageElement | null = null;
   if (
     customImageObj &&
     customImageObj.complete &&
-    customImageObj.naturalWidth === 1469 &&
-    customImageObj.naturalHeight === 3508 &&
+    customImageObj.naturalWidth > 0 &&
     !customImageObj.src.includes('QN26') &&
     !customImageObj.src.includes('quynhon')
   ) {
     bgImgToDraw = customImageObj;
+  }
+
+  // If customImageObj is not ready or null, try loading options.defaultBgUrl or config.customBgDataUrl
+  if (!bgImgToDraw) {
+    const targetUrl = options.defaultBgUrl || config.customBgDataUrl;
+    if (targetUrl && targetUrl !== '/NA26.png' && !targetUrl.includes('QN26') && !targetUrl.includes('quynhon')) {
+      try {
+        const bgImg = new Image();
+        bgImg.crossOrigin = 'anonymous';
+        bgImg.src = targetUrl;
+        await new Promise<void>((resolve) => {
+          if (bgImg.complete && bgImg.naturalWidth > 0) return resolve();
+          bgImg.onload = () => resolve();
+          bgImg.onerror = () => resolve();
+          setTimeout(resolve, 800);
+        });
+        if (bgImg.naturalWidth > 0) {
+          bgImgToDraw = bgImg;
+        }
+      } catch {}
+    }
+  }
+
+  // Final fallback to cached NA26.png
+  if (!bgImgToDraw) {
+    bgImgToDraw = await getNA26Image();
   }
 
   if (bgImgToDraw && bgImgToDraw.complete && bgImgToDraw.naturalWidth > 0) {

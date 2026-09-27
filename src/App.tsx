@@ -50,6 +50,14 @@ const DEFAULT_CONFIG: CertificateConfig = {
 export default function App() {
   // All races loaded from server or localStorage
   const [allRaces, setAllRaces] = useState<Race[]>(() => getLocalRaces());
+  const [isRacesLoaded, setIsRacesLoaded] = useState<boolean>(false);
+
+  // Remember the path user explicitly typed into browser address bar on load
+  const targetPathOnMount = React.useRef<string>(
+    typeof window !== 'undefined'
+      ? window.location.pathname + window.location.search + window.location.hash
+      : ''
+  );
 
   // Detect active race from URL path
   const [activeRace, setActiveRace] = useState<Race>(() => {
@@ -66,9 +74,24 @@ export default function App() {
   const refreshRacesList = useCallback(async () => {
     const list = await fetchAllRaces();
     setAllRaces(list);
+    setIsRacesLoaded(true);
     setActiveRace((prev) => {
+      // Prioritize the route user directly visited in URL bar (e.g. /test or /ha-long-2026)
+      if (targetPathOnMount.current) {
+        const fromPath = resolveRaceFromPath(targetPathOnMount.current, list);
+        const cleanReq = targetPathOnMount.current.replace(/^\/+|\/+$/g, '').toLowerCase().split('?')[0].split('#')[0];
+        if (cleanReq && cleanReq !== 'admin' && cleanReq !== 'api') {
+          if (fromPath && (
+            fromPath.slug.toLowerCase() === cleanReq ||
+            fromPath.id.toLowerCase() === cleanReq ||
+            (fromPath.code && fromPath.code.toLowerCase() === cleanReq)
+          )) {
+            return fromPath;
+          }
+        }
+      }
       const match = list.find((r) => r.id === prev.id || r.slug === prev.slug);
-      return match ? match : prev;
+      return match ? match : (list[0] || prev);
     });
   }, []);
 
@@ -301,9 +324,11 @@ export default function App() {
   // Sync state when activeRace changes
   useEffect(() => {
     // Ensure clean URL pathname (/quy-nhon-2026 or /nghe-an-2026) unless in /admin
-    const currentPath = window.location.pathname.replace(/^\/+/, '');
-    if (!window.location.pathname.startsWith('/admin') && currentPath !== activeRace.slug) {
-      window.history.replaceState(null, '', `/${activeRace.slug}${window.location.search}`);
+    if (isRacesLoaded) {
+      const currentPath = window.location.pathname.replace(/^\/+/, '');
+      if (!window.location.pathname.startsWith('/admin') && currentPath !== activeRace.slug) {
+        window.history.replaceState(null, '', `/${activeRace.slug}${window.location.search}`);
+      }
     }
 
     // Dynamic document title

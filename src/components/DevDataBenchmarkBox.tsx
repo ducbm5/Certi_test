@@ -233,7 +233,20 @@ export const DevDataBenchmarkBox: React.FC<DevDataBenchmarkBoxProps> = ({
     const startTime = performance.now();
 
     try {
-      const photosUrl = activeRace.photosScriptUrl?.trim() || 'https://script.google.com/macros/s/AKfycbyUr1QYj9Eyp60HaDLhXJINbr8Yozt3TXMRlPHpJ7QWhpkK6D4D_ZGMhW5dUerljLT3/exec';
+      const rawPhotosUrl = activeRace.photosScriptUrl?.trim();
+      const photosUrl = (rawPhotosUrl && /^https?:\/\//i.test(rawPhotosUrl))
+        ? rawPhotosUrl
+        : (rawPhotosUrl ? '' : 'https://script.google.com/macros/s/AKfycbyUr1QYj9Eyp60HaDLhXJINbr8Yozt3TXMRlPHpJ7QWhpkK6D4D_ZGMhW5dUerljLT3/exec');
+
+      if (!photosUrl) {
+        setPhotosMetric({
+          name: 'Ảnh thi đấu (Photos Script)',
+          status: 'success',
+          durationSec: 0,
+          detail: 'Chưa cấu hình Script ảnh cho giải này',
+        });
+        return 0;
+      }
       const separator = photosUrl.includes('?') ? '&' : '?';
       const noCacheUrl = `${photosUrl}${separator}bib=${encodeURIComponent(bibToTest)}&_nocache=${Date.now()}`;
 

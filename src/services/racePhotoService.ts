@@ -177,7 +177,10 @@ export async function getRunnerRacePhotos(
   }
 
   // 4. Nếu có link Google Apps Script ảnh thi đấu
-  const photosUrl = race?.photosScriptUrl?.trim() || 'https://script.google.com/macros/s/AKfycbyUr1QYj9Eyp60HaDLhXJINbr8Yozt3TXMRlPHpJ7QWhpkK6D4D_ZGMhW5dUerljLT3/exec';
+  const rawPhotosUrl = race?.photosScriptUrl?.trim();
+  const photosUrl = (rawPhotosUrl && /^https?:\/\//i.test(rawPhotosUrl))
+    ? rawPhotosUrl
+    : (rawPhotosUrl ? '' : 'https://script.google.com/macros/s/AKfycbyUr1QYj9Eyp60HaDLhXJINbr8Yozt3TXMRlPHpJ7QWhpkK6D4D_ZGMhW5dUerljLT3/exec');
   if (photosUrl) {
     try {
       let rawText = '';

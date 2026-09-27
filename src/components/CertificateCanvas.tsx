@@ -155,14 +155,15 @@ export const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
       // Purge any legacy background from IndexedDB / localStorage
       await removeSavedBackgroundImage();
 
+      const targetBg = defaultBgUrl || activeRace?.defaultBgUrl || '/NA26.png';
       onChangeConfig({
         ...config,
         bgMode: 'custom',
-        customBgDataUrl: '/NA26.png',
+        customBgDataUrl: targetBg,
       });
     }
     loadSavedBg();
-  }, [raceId, defaultBgUrl]);
+  }, [raceId, defaultBgUrl, activeRace?.defaultBgUrl]);
 
   // Track user custom uploaded photo separately so changing runners switches to the runner's photo if present
   const [userUploadedPhoto, setUserUploadedPhoto] = useState<string | null>(null);
@@ -238,14 +239,18 @@ export const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
 
   // Preload custom cert background image with automatic fallback to public /NA26.png or defaultBgUrl
   useEffect(() => {
-    const rawBg = config.customBgDataUrl || defaultBgUrl || activeRace?.defaultBgUrl || '/NA26.png';
+    const raceDefault = defaultBgUrl || activeRace?.defaultBgUrl;
+    const rawBg = config.customBgDataUrl && config.customBgDataUrl !== '/NA26.png'
+      ? config.customBgDataUrl
+      : (raceDefault || '/NA26.png');
+
     const bgUrl =
       rawBg &&
       !rawBg.includes('QN26') &&
       !rawBg.includes('quynhon') &&
       !rawBg.includes('17cfwL9HAxh2_tRgvdMp66URxzh6wLj46')
         ? rawBg
-        : '/NA26.png';
+        : (raceDefault || '/NA26.png');
     const custImg = new Image();
     custImg.crossOrigin = 'anonymous';
     custImg.src = bgUrl;
@@ -256,7 +261,7 @@ export const CertificateCanvas: React.FC<CertificateCanvasProps> = ({
     custImg.onerror = () => {
       const fallbackImg = new Image();
       fallbackImg.crossOrigin = 'anonymous';
-      fallbackImg.src = '/NA26.png';
+      fallbackImg.src = raceDefault || '/NA26.png';
       fallbackImg.onload = () => {
         customImgRef.current = fallbackImg;
         setImagesReady((prev) => !prev);
