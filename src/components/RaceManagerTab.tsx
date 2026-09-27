@@ -966,6 +966,24 @@ export const RaceManagerTab: React.FC<RaceManagerTabProps> = ({
                         </button>
                       </div>
 
+                      {/* Hoặc dán link ảnh Online / Google Drive */}
+                      <div className="mt-2 space-y-1">
+                        <label className="text-[11px] text-stone-300 font-medium flex items-center gap-1.5">
+                          <span>Hoặc dán link ảnh online (Google Drive / Imgur / CDN):</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formBgUrl.startsWith('data:') ? '' : formBgUrl}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setFormBgUrl(val || '/NA26.png');
+                            setFormBgDataUrl(null);
+                          }}
+                          placeholder="https://drive.google.com/file/d/... hoặc /backgrounds/ten_anh.png"
+                          className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 rounded-lg text-xs text-white placeholder-stone-500 focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                      </div>
+
                       <div className="text-[11px] text-stone-400">
                         {formBgDataUrl ? (
                           <span className="text-emerald-400 font-medium">✓ Đã chọn ảnh mới từ máy (sẽ được lưu vào hệ thống)</span>
